@@ -60,28 +60,28 @@ response = services.Service.MultiplyStreamStream(
 print(f'Message: {", ".join(str(res.result) for res in response)}')
 
 response = services.Service.FibonacciUnaryUnary(
-    protos.FibonacciRequest(number=5),
+    protos.FibonacciRequest(number=50),
     'localhost:50051',
     insecure=True
 )
 print(f'Message: {response.result}')
 
 response = services.Service.FibonacciUnaryStream(
-    protos.FibonacciRequest(number=35),
+    protos.FibonacciRequest(number=80),
     'localhost:50051',
     insecure=True
 )
 print(f'Message: {", ".join(str(res.result) for res in response)}')
 
 response = services.Service.FibonacciStreamUnary(
-    iter([protos.FibonacciRequest(number=5), protos.FibonacciRequest(number=7)]),
+    iter([protos.FibonacciRequest(number=80), protos.FibonacciRequest(number=50)]),
     'localhost:50051',
     insecure=True
 )
 print(f'Message: {response.result}')
 
 response = services.Service.FibonacciStreamStream(
-    iter([protos.FibonacciRequest(number=60), protos.FibonacciRequest(number=15)]),
+    iter([protos.FibonacciRequest(number=90), protos.FibonacciRequest(number=15)]),
     'localhost:50051',
     insecure=True
 )

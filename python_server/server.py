@@ -1,9 +1,12 @@
 from os import environ
+from time import time
 
-from grpc import server
+from grpc import server, ServerInterceptor
 from concurrent import futures
-from py_grpc_prometheus.prometheus_server_interceptor import PromServerInterceptor
 from prometheus_client import start_http_server
+from python_grpc_prometheus.prometheus_server_interceptor import _wrap_rpc_behavior
+from python_grpc_prometheus.server_metrics import SERVER_HANDLED_LATENCY_SECONDS
+from python_grpc_prometheus.util import split_call_details, type_from_method
 
 from service_pb2 import (
     GreetingsRequest, GreetingsResponse,
@@ -15,6 +18,32 @@ from service_pb2_grpc import ServiceServicer, add_ServiceServicer_to_server
 
 SERVER_PORT = environ.get('PYTHON_SERVER_PORT', '50051')
 METRICS_PORT = int(environ.get('PYTHON_SERVER_METRICS_PORT', '1111'))
+
+
+class ServiceLatencyInterceptor(ServerInterceptor):
+
+    def intercept_service(self, continuation, handler_call_details):
+
+        grpc_service, grpc_method, ok = split_call_details(handler_call_details)
+        if not ok:
+            return continuation(handler_call_details)
+
+        def latency_wrapper(behavior, request_streaming, response_streaming):
+            grpc_type = type_from_method(request_streaming, response_streaming)
+
+            def new_behavior(request_or_iterator, service_context):
+                start = time()
+                try:
+                    return behavior(request_or_iterator, service_context)
+                finally:
+                    SERVER_HANDLED_LATENCY_SECONDS.labels(
+                        grpc_type=grpc_type,
+                        grpc_service=grpc_service,
+                        grpc_method=grpc_method).observe(max(time() - start, 0))
+
+            return new_behavior
+
+        return _wrap_rpc_behavior(continuation(handler_call_details), latency_wrapper)
 
 
 def fibonacci(n):
@@ -84,7 +113,7 @@ class Service(ServiceServicer):
 def serve():
     service = server(
         futures.ThreadPoolExecutor(max_workers=10),
-        interceptors=[PromServerInterceptor(enable_handling_time_histogram=True)]
+        interceptors=[ServiceLatencyInterceptor()]
     )
     add_ServiceServicer_to_server(Service(), service)
     service.add_insecure_port(f'[::]:{SERVER_PORT}')
