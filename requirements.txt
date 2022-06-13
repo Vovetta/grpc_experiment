@@ -1,0 +1,2 @@
+py_grpc_prometheus==0.7.0
+grpcio-tools==1.46.3

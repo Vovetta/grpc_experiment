@@ -1,4 +1,4 @@
-from logging import basicConfig
+from os import environ
 
 from grpc import server
 from concurrent import futures
@@ -7,6 +7,10 @@ from prometheus_client import start_http_server
 
 from service_pb2 import GreetingsResponse, GreetingsRequest
 from service_pb2_grpc import ServiceServicer, add_ServiceServicer_to_server
+
+
+SERVER_PORT = environ.get('PYTHON_SERVER_PORT', '50051')
+METRICS_PORT = int(environ.get('PYTHON_SERVER_METRICS_PORT', '1111'))
 
 
 class Service(ServiceServicer):
@@ -30,17 +34,14 @@ class Service(ServiceServicer):
 def serve():
     service = server(
         futures.ThreadPoolExecutor(max_workers=10),
-        interceptors=[PromServerInterceptor()]
+        interceptors=[PromServerInterceptor(enable_handling_time_histogram=True)]
     )
     add_ServiceServicer_to_server(Service(), service)
-    service.add_insecure_port('[::]:50051')
+    service.add_insecure_port(f'[::]:{SERVER_PORT}')
     service.start()
     service.wait_for_termination()
 
 
-# Start an end point to expose metrics.
-start_http_server(1111)
-
 if __name__ == '__main__':
-    basicConfig()
+    start_http_server(METRICS_PORT)
     serve()

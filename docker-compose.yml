@@ -4,14 +4,16 @@ networks:
 
 services:
   python-grpc:
-    image: python:3.10.5
+    build:
+      dockerfile: Dockerfile-python-server
     container_name: python-grpc
-    expose:
-      - 50051
-      - 1111
+    environment:
+      - PYTHON_SERVER_PORT=${PYTHON_SERVER_PORT}
+      - PYTHON_SERVER_METRICS_PORT=${PYTHON_SERVER_METRICS_PORT}
+      - PYTHONUNBUFFERED=1
     ports:
-      - 50051:50051
-      - 1111:1111
+      - ${PYTHON_SERVER_PORT}:${PYTHON_SERVER_PORT}
+      - ${PYTHON_SERVER_METRICS_PORT}:${PYTHON_SERVER_METRICS_PORT}
     networks:
       - bridge-network
 
@@ -22,11 +24,10 @@ services:
       - prometheus
     volumes:
       - ./grafana_data:/var/lib/grafana
+      - ./grafana_source.yml:/etc/grafana/provisioning/datasources/grafana_source.yml
     user: "472"
-    expose:
-      - 3000
     ports:
-      - 3000:3000
+      - ${GRAFANA_PORT}:${GRAFANA_PORT}
     networks:
       - bridge-network
 
@@ -44,9 +45,7 @@ services:
       - '--storage.tsdb.retention=200h'
       - '--web.enable-lifecycle'
     # restart: unless-stopped
-    expose:
-      - 9090
     ports:
-      - 9090:9090
+      - ${PROMETHEUS_PORT}:${PROMETHEUS_PORT}
     networks:
       - bridge-network

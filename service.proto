@@ -3,7 +3,7 @@ syntax = "proto3";
 option java_multiple_files = true;
 option java_package = "io.grpc.service";
 option java_outer_classname = "ServiceProto";
-option objc_class_prefix = "HLW";
+option objc_class_prefix = "GRPC";
 
 package service;
 

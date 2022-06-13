@@ -7,4 +7,5 @@ scrape_configs:
   - job_name: 'python-grpc-server'
     scrape_interval: 5s
     static_configs:
-      - targets: ['localhost:1111']
+      - targets:
+        - python-grpc:1111
