@@ -1,0 +1,52 @@
+networks:
+  bridge-network:
+    driver: bridge
+
+services:
+  python-grpc:
+    image: python:3.10.5
+    container_name: python-grpc
+    expose:
+      - 50051
+      - 1111
+    ports:
+      - 50051:50051
+      - 1111:1111
+    networks:
+      - bridge-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    depends_on:
+      - prometheus
+    volumes:
+      - ./grafana_data:/var/lib/grafana
+    user: "472"
+    expose:
+      - 3000
+    ports:
+      - 3000:3000
+    networks:
+      - bridge-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention=200h'
+      - '--web.enable-lifecycle'
+    # restart: unless-stopped
+    expose:
+      - 9090
+    ports:
+      - 9090:9090
+    networks:
+      - bridge-network

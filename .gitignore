@@ -1,0 +1,8 @@
+.idea
+__pycache__
+
+grafana_data
+prometheus_data
+
+service_pb2.py
+service_pb2_grpc.py

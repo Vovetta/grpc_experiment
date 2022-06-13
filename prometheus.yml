@@ -1,0 +1,10 @@
+global:
+  scrape_interval: 15s
+  external_labels:
+    monitor: 'vovetta-grpc-monitor'
+
+scrape_configs:
+  - job_name: 'python-grpc-server'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['localhost:1111']
