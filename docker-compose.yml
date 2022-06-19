@@ -1,3 +1,5 @@
+name: grpc-test
+
 networks:
   bridge-network:
     driver: bridge
@@ -6,7 +8,7 @@ services:
   python-grpc:
     build:
       dockerfile: Dockerfile-python-server
-    container_name: python-grpc
+    container_name: python-server
     environment:
       - PYTHON_SERVER_PORT=${PYTHON_SERVER_PORT}
       - PYTHON_SERVER_METRICS_PORT=${PYTHON_SERVER_METRICS_PORT}
@@ -14,6 +16,19 @@ services:
     ports:
       - ${PYTHON_SERVER_PORT}:${PYTHON_SERVER_PORT}
       - ${PYTHON_SERVER_METRICS_PORT}:${PYTHON_SERVER_METRICS_PORT}
+    networks:
+      - bridge-network
+
+  node-grpc:
+    build:
+      dockerfile: Dockerfile-node-server
+    container_name: node-server
+    environment:
+      - NODE_SERVER_PORT=${NODE_SERVER_PORT}
+      - NODE_SERVER_METRICS_PORT=${NODE_SERVER_METRICS_PORT}
+    ports:
+      - ${NODE_SERVER_PORT}:${NODE_SERVER_PORT}
+      - ${NODE_SERVER_METRICS_PORT}:${NODE_SERVER_METRICS_PORT}
     networks:
       - bridge-network
 

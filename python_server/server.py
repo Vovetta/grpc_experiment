@@ -118,6 +118,10 @@ def serve():
     add_ServiceServicer_to_server(Service(), service)
     service.add_insecure_port(f'[::]:{SERVER_PORT}')
     service.start()
+
+    print(f'Server running at http://127.0.0.1:{SERVER_PORT}')
+    print(f'Metrics running at http://127.0.0.1:{METRICS_PORT}')
+
     service.wait_for_termination()
 
 

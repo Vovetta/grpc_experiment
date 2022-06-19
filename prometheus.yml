@@ -9,3 +9,9 @@ scrape_configs:
     static_configs:
       - targets:
         - python-grpc:1111
+
+  - job_name: 'node-grpc-server'
+    scrape_interval: 5s
+    static_configs:
+      - targets:
+        -  node-grpc:1112
