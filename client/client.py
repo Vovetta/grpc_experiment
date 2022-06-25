@@ -1,11 +1,16 @@
+from os import environ
+
 import grpc.experimental
 
 protos = grpc.protos('service.proto')
 services = grpc.services('service.proto')
 
-if __name__ == '__main__':
-    for endpoint in ['localhost:50051', 'localhost:50052']:
+endpoint = environ.get('ENDPOINT')
 
+if __name__ == '__main__':
+    print(f'Connecting to endpoint: {endpoint}')
+
+    while True:
         response = services.Service.GreetingsUnaryUnary(
             protos.GreetingsRequest(name='you'),
             endpoint,

@@ -16,10 +16,6 @@ const getType = method => {
     return 'unknown';
 };
 
-const toLowerCamelCase = str => {
-    return str.charAt(0).toLowerCase() + str.slice(1);
-};
-
 const lookupServiceMetadata = (service, implementation) => {
     const serviceKeys = Object.keys(service);
     const implementationKeys = Object.keys(implementation);

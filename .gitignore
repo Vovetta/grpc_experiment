@@ -1,7 +1,7 @@
 .idea
 __pycache__
 node_modules
-node_server/service.proto
+*/service.proto
 
 grafana_data
 prometheus_data

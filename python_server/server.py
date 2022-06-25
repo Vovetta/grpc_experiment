@@ -84,10 +84,10 @@ class Service(ServiceServicer):
         yield MultiplyResponse(result=request.number * request.multiplier)
 
     def MultiplyStreamUnary(self, request_iterator: MultiplyRequest, context):
-        message = []
+        result = 0
         for request in request_iterator:
-            message.append(request.number * request.multiplier)
-        return MultiplyResponse(result=message[-1])
+            result = request.number * request.multiplier
+        return MultiplyResponse(result=result)
 
     def MultiplyStreamStream(self, request_iterator: MultiplyRequest, context):
         for request in request_iterator:
@@ -100,10 +100,10 @@ class Service(ServiceServicer):
         yield FibonacciResponse(result=fibonacci(request.number))
 
     def FibonacciStreamUnary(self, request_iterator: FibonacciRequest, context):
-        message = []
+        result = 0
         for request in request_iterator:
-            message.append(fibonacci(request.number))
-        return FibonacciResponse(result=message[-1])
+            result = fibonacci(request.number)
+        return FibonacciResponse(result=result)
 
     def FibonacciStreamStream(self, request_iterator: FibonacciRequest, context):
         for request in request_iterator:

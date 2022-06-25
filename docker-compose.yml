@@ -32,6 +32,30 @@ services:
     networks:
       - bridge-network
 
+  python-client:
+    build:
+      dockerfile: Dockerfile-client
+    depends_on:
+      - python-grpc
+    container_name: python-client
+    environment:
+      - ENDPOINT=python-grpc:${PYTHON_SERVER_PORT}
+      - PYTHONUNBUFFERED=1
+    networks:
+      - bridge-network
+
+  node-client:
+    build:
+      dockerfile: Dockerfile-client
+    depends_on:
+      - node-grpc
+    container_name: node-client
+    environment:
+      - ENDPOINT=node-grpc:${NODE_SERVER_PORT}
+      - PYTHONUNBUFFERED=1
+    networks:
+      - bridge-network
+
   grafana:
     image: grafana/grafana:latest
     container_name: grafana

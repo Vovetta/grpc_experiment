@@ -9,10 +9,18 @@ const { grpcMetricsMiddleware, client } = require('./middleware')();
 
 const SERVER_PORT = process.env.NODE_SERVER_PORT ?? '50052'
 const METRICS_PORT = process.env.NODE_SERVER_METRICS_PORT ?? '1112'
-const grpcBind = `localhost:${SERVER_PORT}`;
+const grpcBind = `0.0.0.0:${SERVER_PORT}`;
 
-const packageDefinition = protoLoader.loadSync('service.proto', {});
+const packageDefinition = protoLoader.loadSync('./service.proto', {});
 const service = grpc.loadPackageDefinition(packageDefinition).service;
+
+function fibonacci(n){
+  let arr = [0, 1];
+  for (let i = 2; i < n + 1; i++){
+    arr.push(arr[i - 2] + arr[i -1])
+  }
+ return arr[n]
+}
 
 const createServer = () => {
     const server = serverProxy(new grpc.Server());
@@ -20,12 +28,10 @@ const createServer = () => {
     server
         .addService(service.Service.service, {
             GreetingsUnaryUnary: async (call, callback) => {
-                const request = call.request;
-                callback(null, {message: request.name});
+                callback(null, {message: call.request.name});
             },
             GreetingsUnaryStream: async (call) => {
-                const request = call.request;
-                call.write({message: request.name});
+                call.write({message: call.request.name});
                 call.end();
             },
             GreetingsStreamUnary: async (call, callback) => {
@@ -36,7 +42,7 @@ const createServer = () => {
                 }
                 callback(null, {message: message});
             },
-            GreetingsStreamStream: async (call, callback) => {
+            GreetingsStreamStream: async (call) => {
                 call.on('data', function(data) {
                     call.write({message: data.name});
                 });
@@ -44,39 +50,52 @@ const createServer = () => {
                     call.end();
                 });
             },
-            MultiplyUnaryUnary: async (call) => {
-                const request = new GreetingsRequest(call.request);
-                return new GreetingsResponse({message: `Hello, ${request.name}!`});
+            MultiplyUnaryUnary: async (call, callback) => {
+                callback(null, {result: call.request.number * call.request.multiplier});
             },
             MultiplyUnaryStream: async (call) => {
-                const request = new GreetingsRequest(call.request);
-                return new GreetingsResponse({message: `Hello, ${request.name}!`});
+                call.write({result: call.request.number * call.request.multiplier});
+                call.end();
             },
-            MultiplyStreamUnary: async (call) => {
-                const request = new GreetingsRequest(call.request);
-                return new GreetingsResponse({message: `Hello, ${request.name}!`});
+            MultiplyStreamUnary: async (call, callback) => {
+                let result = 0;
+                for await (let data of call) {
+                    result = data.number * data.multiplier
+                }
+                callback(null, {result: result});
             },
             MultiplyStreamStream: async (call) => {
-                const request = new GreetingsRequest(call.request);
-                return new GreetingsResponse({message: `Hello, ${request.name}!`});
+                call.on('data', function(data) {
+                    call.write({result: data.number * data.multiplier});
+                });
+                call.on('end', function() {
+                    call.end();
+                });
             },
-            FibonacciUnaryUnary: async (call) => {
-                const request = new GreetingsRequest(call.request);
-                return new GreetingsResponse({message: `Hello, ${request.name}!`});
+            FibonacciUnaryUnary: async (call, callback) => {
+                callback(null, {result: fibonacci(call.request.number)});
             },
             FibonacciUnaryStream: async (call) => {
-                const request = new GreetingsRequest(call.request);
-                return new GreetingsResponse({message: `Hello, ${request.name}!`});
+                call.write({result: fibonacci(call.request.number)});
+                call.end();
             },
-            FibonacciStreamUnary: async (call) => {
-                const request = new GreetingsRequest(call.request);
-                return new GreetingsResponse({message: `Hello, ${request.name}!`});
+            FibonacciStreamUnary: async (call, callback) => {
+                let result = 0;
+                for await (let data of call) {
+                    result = fibonacci(data.number)
+                }
+                callback(null, {result: result});
             },
             FibonacciStreamStream: async (call) => {
-                const request = new GreetingsRequest(call.request);
-                return new GreetingsResponse({message: `Hello, ${request.name}!`});
-            },
+                call.on('data', function(data) {
+                    call.write({result: fibonacci(data.number)});
+                });
+                call.on('end', function() {
+                    call.end();
+                });
+            }
         })
+
     server.bindAsync(
         grpcBind,
         grpc.ServerCredentials.createInsecure(),
@@ -95,11 +114,9 @@ const createServer = () => {
 createServer()
 
 const server = http.createServer(async (req, res) => {
-  // Retrieve route from request object
   const route = url.parse(req.url).pathname
 
   if (route === '/metrics') {
-    // Return all metrics the Prometheus exposition format
     res.setHeader('Content-Type', client.register.contentType)
     res.end(client.register.metrics())
   }
